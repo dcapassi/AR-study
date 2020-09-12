@@ -1,0 +1,38 @@
+AR Foundation Image Tracking: https://www.youtube.com/watch?v=9qErhhxoEVY
+MatthewHallberg Repositories: https://github.com/MatthewHallberg?tab=repositories
+
+
+-------------------------------
+Unity Script to access the WebCam/Mobile Phone
+Reference: https://www.youtube.com/watch?v=tEXEe_ikfLw
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class camScript : MonoBehaviour
+{
+
+    static WebCamTexture backCam;
+
+    void Start()
+    {
+
+        if (backCam == null)
+        {
+            backCam = backCam = new WebCamTexture();
+        }
+        GetComponent<MeshRenderer>().material.mainTexture = backCam;
+        if (!backCam.isPlaying)
+        {
+            backCam.Play();
+        }
+
+
+    }
+
+    void Update()
+    {
+
+    }
+}
