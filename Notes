@@ -36,3 +36,51 @@ public class camScript : MonoBehaviour
 
     }
 }
+
+#############################################################################
+Accessig Renderer and changing color on key press
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class boxScript : MonoBehaviour
+{
+    //Declaring a public Variable
+    public string inputName = "a";
+    private Renderer renderer;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        renderer = GetComponent<MeshRenderer>();
+        Debug.Log("Studying C# with Unity");
+        Debug.Log("Log of the Script: " + inputName);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            renderer.material.color = Color.red;
+            transform.Translate(Vector3.forward * Time.deltaTime);
+        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            renderer.material.color = Color.blue;
+        }
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            renderer.material.color = Color.cyan;
+        }
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            renderer.material.color = Color.gray;
+        }
+
+
+    }
+}
+
