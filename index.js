@@ -1,3 +1,4 @@
+import 'regenerator-runtime/runtime'
 import * as THREE from "./three.js";
 import { StereoEffect } from "./stereo.js";
 import { fontJSON } from "./font.js";
@@ -11,8 +12,57 @@ var canvas = canvasElement.getContext("2d");
 var stats;
 var output = false;
 var showing = ""
+var deviceName = "AP-sala-010"
+
+//API
+
+import createZabbixApi from "./API/Zabbix/zabbixAPI";
+import getToken from "./API/Zabbix/getToken";
+import getHost from "./API/Zabbix/getHost";
+import getZabbixItems from "./API/Zabbix/getItems";
 
 var meshTextOutput;
+
+var api = createZabbixApi("192.168.56.1","8181")
+
+let username = "Admin"
+let password = "zabbix"
+
+
+var zabbixFetchedItems = [];
+
+const getItems = (token, api, name) => {
+  getHost(token, api, name).then((result) => {
+    let hostId = false;
+    try {
+      hostId = result.data.result[0].hostid;
+    } catch (error) {
+      console.log(error);
+    }
+    if (hostId) {
+      getZabbixItems(token, api, hostId).then((response) => {
+        console.log(response);
+        let data = response.data.result;
+        let arrayItems = [];
+        data.map((entry) => {
+          arrayItems.push({
+            key: entry.key_,
+            lastvalue: parseFloat(entry.lastvalue).toFixed(2),
+          });
+        });
+        console.log(arrayItems);
+        createOutput(name,transformArraytoText(arrayItems))
+        zabbixFetchedItems = arrayItems;
+        
+
+      });
+    }
+  });
+  return zabbixFetchedItems;
+};
+
+
+
 
 var planeOutput;
 
@@ -59,13 +109,28 @@ function tick() {
 
       console.log(code.data);
 
-      if (code.data === "ap001")
+      if (code.data.substring(0,4) === "nmp-" && showing !=code.data.substring(4,) )
       {
-      createOutput(code.data)
+        try{
+          getToken(
+            username,
+            password,
+            api
+          ).then((response) => {
+            const token = response.data.result;
+            if (token !== undefined) {
+              console.log(token);
+              getItems(token, api, code.data.substring(4,))
+            }
+          });
+        }
+        catch(e){
+          console.log(e)
+        }
+    
+      
       }
-      if (code.data === "ap002"){
-      createOutput(code.data)
-      }
+
 
     } else {
     }
@@ -83,7 +148,7 @@ animate();
 
 window.setInterval(function(){
   tick();
-}, 500);
+}, 300);
 
 function init() {
 
@@ -140,6 +205,17 @@ function init() {
         
 }
 
+
+var transformArraytoText = array => {
+  var text = ""
+  array.map( entry => {
+    text = text + entry.key + " " + entry.lastvalue + "\n"
+  })
+
+  return text;
+  }
+
+
 function createStats() {
   var stats = new Stats();
   stats.setMode(0);
@@ -157,7 +233,7 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
 }
 
-function createOutput(currentlyReading){
+function createOutput(currentlyReading,data){
 
   if ( output === true && currentlyReading !== showing){
     scene.remove(meshTextOutput);
@@ -192,7 +268,7 @@ function createOutput(currentlyReading){
   let disponibilidadeRandom = getRandomInt(90,100);
   let latenciaRandom = getRandomInt(1,30);
 
-  var geometry = new THREE.TextGeometry(`     ${currentlyReading}\n-----------------\nOperacional: Sim\nDisponibilidade: ${disponibilidadeRandom}%\nLatencia: ${latenciaRandom}ms`, {
+  var geometry = new THREE.TextGeometry(`     ${currentlyReading}\n-----------------\n${data}`, {
     font: font,
     size: 15,
     height: 1,
@@ -215,7 +291,7 @@ function createOutput(currentlyReading){
   output = true;
   showing = currentlyReading;
 
-  setTimeout(function(){ output = false; scene.remove(planeOutput),scene.remove(meshTextOutput);  }, 4000);
+  setTimeout(function(){ output = false; scene.remove(planeOutput),scene.remove(meshTextOutput); showing="" }, 4000);
 
   }
 
